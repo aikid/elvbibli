@@ -1,0 +1,32 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+  font-family: 'Crimson Text', Georgia, serif;
+  background: linear-gradient(135deg, #F5F1EC 0%, #E8DFD5 100%);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Variables */
+:root {
+  --primary: #2C1810;
+  --primary-light: #4A2F23;
+  --secondary: #C17C4C;
+  --secondary-light: #D4956F;
+  --bg-default: #F5F1EC;
+  --bg-paper: #FFFFFF;
+  --text-primary: #2C1810;
+  --text-secondary: #6B5F55;
+  --shadow-sm: 0 4px 12px rgba(44, 24, 16, 0.1);
+  --shadow-md: 0 8px 24px rgba(44, 24, 16, 0.15);
+  --shadow-lg: 0 16px 32px rgba(44, 24, 16, 0.2);
+}
