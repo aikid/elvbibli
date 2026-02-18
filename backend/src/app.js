@@ -16,7 +16,7 @@ app.get('/health', (req, res) => {
 const path = require('path');
 
 // Servir arquivos estáticos do React
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
 // Fallback para React Router (SPA)
 app.get('*', (req, res, next) => {
@@ -25,7 +25,7 @@ app.get('*', (req, res, next) => {
     return next();
   }
 
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
 });
 
 // Rota não encontrada
