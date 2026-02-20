@@ -8,13 +8,21 @@
     "dev": "node --watch src/server.js",
     "build": "cd ../frontend && npm install && npm run build"
   },
-  "keywords": ["biblioteca", "api", "express", "mongoose", "mongodb"],
+  "keywords": [
+    "biblioteca",
+    "api",
+    "express",
+    "mongoose",
+    "mongodb"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "mongoose": "^8.0.3"
+    "express-rate-limit": "^8.2.1",
+    "mongoose": "^8.0.3",
+    "sanitize-html": "^2.17.1"
   }
 }

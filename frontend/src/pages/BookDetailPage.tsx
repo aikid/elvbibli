@@ -14,10 +14,12 @@ export default function BookDetailPage() {
     usuario: string;
     nota: number | null;
     comentario: string;
+    website: string | null;
   }>({
     usuario: '',
     nota: null,
     comentario: '',
+    website: null,
   });
 
   useEffect(() => {
@@ -65,6 +67,7 @@ export default function BookDetailPage() {
 
     const dataAtual = new Date().toISOString().split('T')[0];
     const avaliacaoEnviada = {
+      website: novaAvaliacao.website,
       usuario: novaAvaliacao.usuario,
       nota: novaAvaliacao.nota,
       comentario: novaAvaliacao.comentario,
@@ -199,6 +202,7 @@ export default function BookDetailPage() {
                 value={novaAvaliacao.comentario}
                 onChange={(e) => setNovaAvaliacao({ ...novaAvaliacao, comentario: e.target.value })}
               />
+              <input type="text" name="website" style={{ display: "none" }} />
             </div>
 
             <button
