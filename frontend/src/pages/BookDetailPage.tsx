@@ -87,7 +87,7 @@ export default function BookDetailPage() {
       };
 
       setAvaliacoes([avaliacaoProcessada, ...avaliacoes]);
-      setNovaAvaliacao({ usuario: '', nota: null, comentario: '' });
+      setNovaAvaliacao({ usuario: '', nota: null, comentario: '', website: null });
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 3000);
     } catch (error) {
