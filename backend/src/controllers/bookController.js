@@ -1,4 +1,5 @@
 const Book = require('../models/Book');
+const sanitizeHtml = require('sanitize-html');
 
 /**
  * GET /books - Lista todos os livros
@@ -137,6 +138,12 @@ const remove = async (req, res) => {
  */
 const addAvaliacao = async (req, res) => {
   try {
+    
+    // 🤖 Proteção contra bots
+    if (req.body.website) {
+      return res.status(400).json({ erro: "Bot detectado" });
+    }
+
     const { id } = req.params;
     const { usuario, nota, comentario, data } = req.body;
 
@@ -151,11 +158,35 @@ const addAvaliacao = async (req, res) => {
       return res.status(400).json({ erro: 'Nota deve ser um número entre 1 e 5' });
     }
 
+    // 🚫 Bloquear links
+    if (/http|www\./i.test(comentario)) {
+      return res.status(400).json({ erro: 'Links não são permitidos nas avaliações.' });
+    }
+
+    // 📏 Limitar tamanho
+    if (comentario.length > 500) {
+      return res.status(400).json({ erro: 'Comentário muito longo (máx 500 caracteres).' });
+    }
+
     const book = await Book.findById(id);
 
     if (!book) {
       return res.status(404).json({ erro: 'Livro não encontrado' });
     }
+
+    // 🧼 Sanitização contra XSS
+    const comentarioSeguro = sanitizeHtml(comentario.trim(), {
+      allowedTags: [],
+      allowedAttributes: {}
+    });
+
+    const usuarioSeguro = sanitizeHtml(usuario.trim(), {
+      allowedTags: [],
+      allowedAttributes: {}
+    });
+
+    // 🌍 Capturar IP corretamente no Render
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     const novaAvaliacao = {
       usuario: usuario.trim(),
