@@ -5,9 +5,18 @@ export type Book = {
   capa: string;
   descricao: string;
   ano: number;
+  quantidade: number;
   genero: string;
   avaliacoes: Avaliacao[];
+  emprestimos: Emprestimo[];
   mediaAvaliacoes: number;
+  statusDisponibilidade: string;
+}
+
+export type Emprestimo = {
+  _id: string;
+  livro: string;
+  pessoa: string;
 }
 
 export type Avaliacao ={

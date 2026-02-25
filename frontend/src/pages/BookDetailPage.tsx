@@ -134,6 +134,7 @@ export default function BookDetailPage() {
             <div className="book-detail-info">
               <h1 className="book-detail-title">{book.titulo}</h1>
               <p className="book-detail-author">por {book.autor}</p>
+              <p className="book-detail-quantity">Quantidade: {book.quantidade}</p>
 
               <div className="book-detail-rating-container">
                 <div className="book-detail-rating">
@@ -146,11 +147,31 @@ export default function BookDetailPage() {
               </div>
 
               <div className="book-detail-tags">
+                <span className={book.statusDisponibilidade === "emprestado" ? "book-detail-tag book-detail-tag-unavailable" : "book-detail-tag book-detail-tag-available"}>{book.statusDisponibilidade}</span>
                 <span className="book-detail-tag book-detail-tag-genre">{book.genero}</span>
                 <span className="book-detail-tag book-detail-tag-year">Publicado em {book.ano}</span>
               </div>
 
               <p className="book-detail-description">{book.descricao}</p>
+              {book.statusDisponibilidade !== "emprestado" ? (
+                <button className="reserveButton" onClick={() => {
+                  const whatsappNumber = '+5511947341276';
+                  const message = `Olá! Gostaria de reservar o livro: ${book.titulo}`;
+                  const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+                  window.open(whatsappUrl, '_blank');
+                }}>
+                  Reservar Livro
+                </button>
+              ) : null}
+              {book.emprestimos.length > 0 && (
+                <div>
+                  {book.emprestimos.map((emprestimo) => (
+                    <div key={emprestimo._id} className="loan-info">
+                      <h3><strong>Emprestado para:</strong> {emprestimo.pessoa}</h3>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

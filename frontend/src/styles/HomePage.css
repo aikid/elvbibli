@@ -337,6 +337,20 @@
   background-color: transparent;
 }
 
+.tag-available {
+  text-transform: capitalize;
+  border: 1px solid green;
+  color: white;
+  background-color: green;
+}
+
+.tag-unavailable {
+  text-transform: capitalize;
+  border: 1px solid red;
+  color: white;
+  background-color: red;
+}
+
 /* No Results */
 .no-results {
   text-align: center;

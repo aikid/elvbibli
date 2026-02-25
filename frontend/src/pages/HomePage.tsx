@@ -106,6 +106,7 @@ export default function HomePage() {
                     <span className="rating-value">{book.mediaAvaliacoes.toFixed(1)}</span>
                   </div>
                   <div className="book-tags">
+                    <span className={book.statusDisponibilidade === "emprestado" ? "tag tag-unavailable" : "tag tag-available"}>{book.statusDisponibilidade}</span>
                     <span className="tag tag-genre">{book.genero}</span>
                     <span className="tag tag-year">{book.ano}</span>
                   </div>
