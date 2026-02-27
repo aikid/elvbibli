@@ -519,4 +519,59 @@
     background: #2d2d2d;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
   }
+
+  /* Dark mode para seção de avaliação */
+  .reviews-section {
+    /* Mantém o fundo padrão, mas pode ajustar se necessário */
+  }
+  .review-form-card {
+    background: #232323;
+    border-color: #444;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  }
+  .review-form-title {
+    color: #f5f5f5;
+  }
+  .success-message {
+    background-color: #234d2a;
+    border-color: #357a38;
+    color: #b6f7c1;
+  }
+  .form-label {
+    color: #f5f5f5;
+  }
+  .form-input,
+  .form-textarea {
+    background-color: #2d2d2d;
+    color: #f5f5f5;
+    border-color: #444;
+  }
+  .form-input:focus,
+  .form-textarea:focus {
+    border-color: var(--secondary);
+  }
+  .submit-button {
+    background-color: var(--primary);
+    color: #fff;
+  }
+  .submit-button:hover:not(:disabled) {
+    background-color: var(--primary-light);
+  }
+  .submit-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .rating-star {
+    color: #444;
+  }
+  .rating-star.filled {
+    color: #FFA500;
+  }
+  .rating-star:hover {
+    color: #FFB732;
+  }
+  .book-detail-tag-year {
+    background-color: var(--primary);
+    color: white;
+}
 }
