@@ -396,4 +396,9 @@
   .no-results-icon {
     color: #555;
   }
+  .tag-year {
+    border: 1px solid var(--primary);
+    color: white;
+    background-color: var(--primary);
+  }
 }
