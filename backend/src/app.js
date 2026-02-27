@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bookRoutes = require('./routes/bookRoutes');
 const emprestimoRoutes = require('./routes/emprestimoRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -10,6 +11,7 @@ app.use(express.json());
 
 app.use('/books', bookRoutes);
 app.use('/emprestimos', emprestimoRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', mensagem: 'API Biblioteca Virtual' });
