@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
-import './LoginPage.css';
+import '../styles/LoginPage.css';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -75,7 +75,7 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-container">
-        <h1>Biblioteca Virtual</h1>
+        {/* <h1>Biblioteca Virtual</h1> */}
         <h2>Entrar</h2>
 
         {step === 'email' ? (

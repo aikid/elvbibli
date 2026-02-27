@@ -5,12 +5,13 @@ const nodemailer = require('nodemailer');
 
 // Configuração do nodemailer
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: process.env.SMTP_PORT || 587,
-  secure: false,
+  service: 'gmail',
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    type: 'OAuth2',
+    user: process.env.OAUTH_EMAIL_USER,
+    clientId: process.env.OAUTH_CLIENT_ID,
+    clientSecret: process.env.OAUTH_CLIENT_SECRET,
+    refreshToken: process.env.OAUTH_REFRESH_TOKEN,
   },
 });
 
@@ -24,14 +25,20 @@ const requestCode = async (req, res) => {
     if (!email) {
       return res.status(400).json({ erro: 'Email é obrigatório' });
     }
+        
+    const normalizedEmail = email.toLowerCase().trim();
+
+    let user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(400).json({ erro: 'Erro ao validar o usuário!' });
+    }
 
     // Validar formato do email
     const emailRegex = /^\S+@\S+\.\S+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ erro: 'Email inválido' });
     }
-
-    const normalizedEmail = email.toLowerCase().trim();
 
     // Verificar rate limit: não permitir novo código antes de 1 minuto
     const recentCode = await VerificationCode.findOne({
@@ -142,10 +149,11 @@ const verifyCode = async (req, res) => {
 
     if (!user) {
       // Criar novo usuário com role 'user' por padrão
-      user = await User.create({
-        email: normalizedEmail,
-        role: 'user',
-      });
+      // user = await User.create({
+      //   email: normalizedEmail,
+      //   role: 'user',
+      // });
+      return res.status(400).json({ erro: 'Erro ao validar o usuário!' });
     }
 
     // Gerar token JWT válido por 1 dia

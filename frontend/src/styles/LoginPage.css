@@ -97,6 +97,10 @@
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+  height: 50px;
+  text-align: center;
+  display: block;
 }
 
 .submit-button:hover:not(:disabled) {
@@ -125,7 +129,10 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s;
-  flex: 1;
+  width: 50%;
+  height: 50px;
+  text-align: center;
+  display: block;
 }
 
 .back-button:hover:not(:disabled) {
