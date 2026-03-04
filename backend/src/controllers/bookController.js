@@ -6,7 +6,9 @@ const sanitizeHtml = require('sanitize-html');
  */
 const listAll = async (req, res) => {
   try {
-    const books = await Book.find({}).sort({ createdAt: -1 });
+    const books = await Book.find({ status: 1 })
+      .populate({ path: 'emprestimos', match: { status: 'ativo' } })
+      .sort({ createdAt: -1 });
     return res.status(200).json(books);
   } catch (error) {
     return res.status(500).json({ erro: 'Erro ao listar livros', mensagem: error.message });
@@ -19,7 +21,7 @@ const listAll = async (req, res) => {
 const getById = async (req, res) => {
   try {
     const { id } = req.params;
-    const book = await Book.findById(id);
+    const book = await Book.findById(id).populate({ path: 'emprestimos', match: { status: 'ativo' } });
 
     if (!book) {
       return res.status(404).json({ erro: 'Livro não encontrado' });

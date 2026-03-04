@@ -47,11 +47,27 @@ const bookSchema = new mongoose.Schema({
     min: [0, 'Quantidade não pode ser negativa'],
     default: 0,
   },
+  emprestimos: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Emprestimo' }],
+    default: [],
+  },
+  status: {
+    type: Number,
+    default: 0,
+  },
 }, {
   timestamps: true,
   collection: 'Book',
-  toJSON: { virtuals: false },
-  toObject: { virtuals: false },
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
+});
+
+// Virtual para determinar disponibilidade
+bookSchema.virtual('statusDisponibilidade').get(function () {
+  if (this.emprestimos && this.emprestimos.length >= this.quantidade) {
+    return 'emprestado';
+  }
+  return 'disponível';
 });
 
 // Recalcula a média das avaliações antes de salvar

@@ -39,6 +39,12 @@ export default function HomePage() {
     return stars;
   };
 
+  const optimizeImage = (url: string) => {
+    console.log(url);
+    if (!url) return "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=600&fit=crop";
+    return url.replace("/upload/", "/upload/w_300,q_auto,f_auto/");
+  };
+
   useEffect(() => {
     getBooks()
       .then(setBooksData)
@@ -90,7 +96,7 @@ export default function HomePage() {
                 onClick={() => navigate(`/livro/${book._id}`)}
               >
                 <div className="book-cover-container">
-                  <img src={book.capa || "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=600&fit=crop"} alt={book.titulo} className="book-cover" />
+                  <img src={optimizeImage(book.capa)} alt={book.titulo} className="book-cover" />
                 </div>
                 <div className="book-content">
                   <h3 className="book-title">{book.titulo}</h3>
@@ -100,6 +106,7 @@ export default function HomePage() {
                     <span className="rating-value">{book.mediaAvaliacoes.toFixed(1)}</span>
                   </div>
                   <div className="book-tags">
+                    <span className={book.statusDisponibilidade === "emprestado" ? "tag tag-unavailable" : "tag tag-available"}>{book.statusDisponibilidade}</span>
                     <span className="tag tag-genre">{book.genero}</span>
                     <span className="tag tag-year">{book.ano}</span>
                   </div>
