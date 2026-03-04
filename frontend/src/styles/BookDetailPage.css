@@ -573,5 +573,8 @@
   .book-detail-tag-year {
     background-color: var(--primary);
     color: white;
-}
+  }
+  .review-card{
+    background: #232323;
+  }
 }
