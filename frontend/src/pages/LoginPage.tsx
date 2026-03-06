@@ -52,8 +52,12 @@ export default function LoginPage() {
       // Salvar token e usuário
       login(token, user);
 
-      // Redirecionar para a página inicial
-      navigate('/');
+      // Redirecionar baseado no role do usuário
+      if (user.role === 'admin') {
+        navigate('/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       setError(
         err.response?.data?.erro ||
