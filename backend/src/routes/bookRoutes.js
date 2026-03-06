@@ -5,7 +5,7 @@ const bookController = require('../controllers/bookController');
 
 // Limite só para avaliações
 const avaliacaoLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 min
+    windowMs: 1 * 60 * 1000, // 15 min
     max: 10, // 10 avaliações por IP
     message: { erro: 'Muitas avaliações enviadas. Tente novamente mais tarde.' }
   });
