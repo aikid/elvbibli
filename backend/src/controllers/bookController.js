@@ -166,8 +166,8 @@ const addAvaliacao = async (req, res) => {
     }
 
     // 📏 Limitar tamanho
-    if (comentario.length > 500) {
-      return res.status(400).json({ erro: 'Comentário muito longo (máx 500 caracteres).' });
+    if (comentario.length > 1500) {
+      return res.status(400).json({ erro: 'Comentário muito longo (máx 1500 caracteres).' });
     }
 
     const book = await Book.findById(id);
