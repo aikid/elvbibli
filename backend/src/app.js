@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bookRoutes = require('./routes/bookRoutes');
+const authRoutes = require('./routes/authRoutes');
 const emprestimoRoutes = require('./routes/emprestimoRoutes');
 
 const app = express();
@@ -8,6 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/auth', authRoutes);
 app.use('/books', bookRoutes);
 app.use('/emprestimos', emprestimoRoutes);
 

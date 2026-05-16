@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/HomePage.css';
 import LogoElv from '../assets/logo-elv.png';
 import { getBooks } from '../services/bookServices';
@@ -9,6 +10,7 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [booksData, setBooksData] = useState<Book[]>([]);
   const navigate = useNavigate();
+  const { isAdmin, isAuthenticated, logout } = useAuth();
 
   const filteredBooks = useMemo(() => {
     if (!searchTerm.trim()) return booksData;
@@ -64,6 +66,39 @@ export default function HomePage() {
           </div>
           <h1 className="title">Biblioteca da Igreja</h1>
           <p className="subtitle">Descubra sua próxima leitura</p>
+          
+          {/* Botões de navegação para usuários autenticados */}
+          {isAuthenticated && (
+            <div className="header-actions">
+              {isAdmin && (
+                <button 
+                  className="btn-dashboard" 
+                  onClick={() => navigate('/dashboard')}
+                >
+                  ⚙️ Dashboard
+                </button>
+              )}
+              <button 
+                className="btn-logout-home" 
+                onClick={() => {
+                  logout();
+                  navigate('/login');
+                }}
+              >
+                Sair
+              </button>
+            </div>
+          )}
+          {!isAuthenticated && (
+            <div className="header-actions">
+              <button 
+                className="btn-login" 
+                onClick={() => navigate('/login')}
+              >
+                Entrar
+              </button>
+            </div>
+          )}
         </header>
 
         {/* Search Bar */}

@@ -1,5 +1,6 @@
 const Emprestimo = require('../models/Emprestimo');
 const Book = require('../models/Book');
+const { getEmprestimosAtrasados, enviarNotificacaoAtrasados } = require('../services/notificationService');
 
 /**
  * GET /emprestimos - Lista todos os empréstimos
@@ -179,6 +180,59 @@ const remove = async (req, res) => {
   }
 };
 
+/**
+ * GET /emprestimos/atrasados - Lista empréstimos atrasados (mais de 30 dias)
+ */
+const getAtrasados = async (req, res) => {
+  try {
+    const emprestimosComAtraso = await getEmprestimosAtrasados();
+    return res.status(200).json(emprestimosComAtraso);
+  } catch (error) {
+    return res.status(500).json({ erro: 'Erro ao buscar empréstimos atrasados', mensagem: error.message });
+  }
+};
+
+/**
+ * POST /emprestimos/notificar-atrasados - Envia e-mails de notificação sobre empréstimos atrasados
+ */
+const sendNotificacoes = async (req, res) => {
+  try {
+    const { emailDestino } = req.body;
+
+    if (!emailDestino) {
+      return res.status(400).json({ erro: 'Email de destino é obrigatório' });
+    }
+
+    const resultado = await enviarNotificacaoAtrasados(emailDestino);
+
+    if (!resultado.enviado) {
+      if (resultado.motivo === 'sem_atrasados') {
+        return res.status(200).json({
+          mensagem: 'Nenhum empréstimo atrasado para notificar',
+          enviados: 0,
+        });
+      }
+      
+      if (resultado.motivo === 'modo_dev') {
+        return res.status(200).json({
+          mensagem: 'Email não enviado (modo desenvolvimento)',
+          enviados: resultado.quantidade,
+          emailDestino,
+        });
+      }
+    }
+
+    return res.status(200).json({
+      mensagem: 'Notificação enviada com sucesso',
+      enviados: resultado.quantidade,
+      emailDestino: resultado.destinatarios,
+    });
+  } catch (error) {
+    console.error('Erro ao enviar notificação:', error);
+    return res.status(500).json({ erro: 'Erro ao enviar notificação', mensagem: error.message });
+  }
+};
+
 module.exports = {
   listAll,
   getById,
@@ -186,4 +240,6 @@ module.exports = {
   devolver,
   getByLivroId,
   remove,
+  getAtrasados,
+  sendNotificacoes,
 };
