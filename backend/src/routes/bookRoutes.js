@@ -10,7 +10,7 @@ const avaliacaoLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 min
     max: 10, // 10 avaliações por IP
     message: { erro: 'Muitas avaliações enviadas. Tente novamente mais tarde.' }
-  });
+ });
   
 
 // Rotas públicas
