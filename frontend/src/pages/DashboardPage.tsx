@@ -24,6 +24,8 @@ interface Emprestimo {
   dataPegou: string;
   dataDevolucao?: string;
   status: 'ativo' | 'devolvido';
+  diasAtraso?: number;
+  diasDesdeEmprestimo?: number;
 }
 
 export default function DashboardPage() {
@@ -337,20 +339,42 @@ function GerenciarLivrosTab() {
 // Componente para Empréstimos
 function EmprestimosTab() {
   const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([]);
+  const [emprestimosAtrasados, setEmprestimosAtrasados] = useState<Emprestimo[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailDestino, setEmailDestino] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const { user } = useAuth();
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    livroId: '',
+    pessoa: '',
+  });
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
 
   useEffect(() => {
-    loadEmprestimos();
+    loadData();
   }, []);
 
-  const loadEmprestimos = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/emprestimos');
-      setEmprestimos(response.data);
+      const [emprestimosRes, booksRes, atrasadosRes] = await Promise.all([
+        api.get('/emprestimos'),
+        api.get('/books'),
+        api.get('/emprestimos/atrasados'),
+      ]);
+      setEmprestimos(emprestimosRes.data);
+      setBooks(booksRes.data);
+      setEmprestimosAtrasados(atrasadosRes.data);
     } catch (err: any) {
-      setError(err.response?.data?.erro || 'Erro ao carregar empréstimos');
+      setError(err.response?.data?.erro || 'Erro ao carregar dados');
     } finally {
       setLoading(false);
     }
@@ -359,12 +383,68 @@ function EmprestimosTab() {
   const handleDevolver = async (id: string) => {
     try {
       await api.put(`/emprestimos/${id}/devolver`);
-      // Recarregar lista
-      loadEmprestimos();
+      // Recarregar dados
+      loadData();
     } catch (err: any) {
       alert(err.response?.data?.erro || 'Erro ao devolver livro');
     }
   };
+
+  const handleSubmitEmprestimo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormLoading(true);
+    setFormError('');
+    setFormSuccess('');
+
+    try {
+      await api.post('/emprestimos', formData);
+      setFormSuccess('Empréstimo registrado com sucesso!');
+      
+      // Limpar formulário e recarregar dados
+      setFormData({ livroId: '', pessoa: '' });
+      setShowForm(false);
+      loadData();
+    } catch (err: any) {
+      setFormError(err.response?.data?.erro || 'Erro ao registrar empréstimo');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleSendNotificacao = async () => {
+    if (!emailDestino.trim()) {
+      alert('Por favor, informe um e-mail válido');
+      return;
+    }
+
+    setSendingEmail(true);
+
+    try {
+      const response = await api.post('/emprestimos/notificar-atrasados', {
+        emailDestino: emailDestino.trim(),
+      });
+      
+      alert(response.data.mensagem || 'Notificação enviada com sucesso!');
+      setShowEmailDialog(false);
+      setEmailDestino('');
+    } catch (err: any) {
+      console.error('Erro ao enviar notificação:', err);
+      alert(err.response?.data?.erro || 'Erro ao enviar notificação');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  // Calcular livros disponíveis
+  const booksWithAvailability = books.map((book) => {
+    const emprestimosAtivos = emprestimos.filter(
+      (e) => e.livro?._id === book._id && e.status === 'ativo'
+    ).length;
+    const disponivel = book.quantidade - emprestimosAtivos;
+    return { ...book, disponivel };
+  });
+
+  const livrosDisponiveis = booksWithAvailability.filter((b) => b.disponivel > 0);
 
   if (loading) {
     return (
@@ -383,59 +463,211 @@ function EmprestimosTab() {
   }
 
   const emprestimosAtivos = emprestimos.filter((e) => e.status === 'ativo');
-  const emprestimosDevolvidos = emprestimos.filter((e) => e.status === 'devolvido');
 
   return (
     <div className="tab-content-inner">
-      <h2>Empréstimos</h2>
-      <p>Total: {emprestimos.length} | Ativos: {emprestimosAtivos.length} | Devolvidos: {emprestimosDevolvidos.length}</p>
+      {/* Alerta de empréstimos atrasados */}
+      {emprestimosAtrasados.length > 0 && (
+        <div className="alerta-atrasados">
+          <div className="alerta-header">
+            <div>
+              <h3>⚠️ Atenção: {emprestimosAtrasados.length} empréstimo(s) atrasado(s)</h3>
+              <p>Os seguintes empréstimos ultrapassaram 30 dias:</p>
+            </div>
+            <button
+              className="btn-notificar"
+              onClick={() => {
+                setEmailDestino(user?.email || '');
+                setShowEmailDialog(true);
+              }}
+            >
+              📧 Enviar Notificação
+            </button>
+          </div>
+          
+          <div className="atrasados-lista">
+            {emprestimosAtrasados.map((emp) => (
+              <div key={emp._id} className="atrasado-item">
+                <div className="atrasado-info">
+                  <strong>{emp.livro?.titulo || 'N/A'}</strong>
+                  <span>Emprestado para: {emp.pessoa}</span>
+                  <span>Data: {new Date(emp.dataPegou).toLocaleDateString('pt-BR')}</span>
+                </div>
+                <div className="atrasado-dias">
+                  <span className="dias-numero">{emp.diasAtraso}</span>
+                  <span className="dias-label">dias de atraso</span>
+                </div>
+                <button
+                  className="btn-devolver-small"
+                  onClick={() => handleDevolver(emp._id)}
+                >
+                  Devolver
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {emprestimos.length === 0 ? (
+      {/* Dialog de envio de email */}
+      {showEmailDialog && (
+        <div className="email-dialog-overlay" onClick={() => !sendingEmail && setShowEmailDialog(false)}>
+          <div className="email-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Enviar Notificação por E-mail</h3>
+            <p>Um e-mail será enviado com a lista de todos os empréstimos atrasados.</p>
+            
+            <div className="form-group">
+              <label htmlFor="emailDestino">E-mail de destino:</label>
+              <input
+                type="email"
+                id="emailDestino"
+                value={emailDestino}
+                onChange={(e) => setEmailDestino(e.target.value)}
+                placeholder="seu@email.com"
+                disabled={sendingEmail}
+                autoFocus
+              />
+            </div>
+
+            <div className="dialog-actions">
+              <button
+                className="btn-cancel"
+                onClick={() => setShowEmailDialog(false)}
+                disabled={sendingEmail}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleSendNotificacao}
+                disabled={sendingEmail}
+              >
+                {sendingEmail ? 'Enviando...' : 'Enviar Notificação'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="emprestimos-header">
+        <div>
+          <h2>Empréstimos Ativos</h2>
+          <p>{emprestimosAtivos.length} {emprestimosAtivos.length === 1 ? 'empréstimo ativo' : 'empréstimos ativos'}</p>
+        </div>
+        <button
+          className="btn-primary"
+          onClick={() => setShowForm(!showForm)}
+        >
+          {showForm ? '✕ Cancelar' : '➕ Novo Empréstimo'}
+        </button>
+      </div>
+
+      {/* Formulário de cadastro */}
+      {showForm && (
+        <div className="emprestimo-form-container">
+          <h3>Registrar Novo Empréstimo</h3>
+          
+          {formSuccess && <div className="success-message">{formSuccess}</div>}
+          {formError && <div className="error-message">{formError}</div>}
+
+          <form onSubmit={handleSubmitEmprestimo} className="form-emprestimo">
+            <div className="form-group">
+              <label htmlFor="livroId">Livro *</label>
+              <select
+                id="livroId"
+                name="livroId"
+                value={formData.livroId}
+                onChange={(e) => setFormData({ ...formData, livroId: e.target.value })}
+                required
+                disabled={formLoading}
+              >
+                <option value="">Selecione um livro</option>
+                {livrosDisponiveis.map((book) => (
+                  <option key={book._id} value={book._id}>
+                    {book.titulo} - {book.autor} ({book.disponivel} disponível)
+                  </option>
+                ))}
+              </select>
+              {livrosDisponiveis.length === 0 && (
+                <p className="form-hint error">Nenhum livro disponível para empréstimo no momento</p>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="pessoa">Nome da Pessoa *</label>
+              <input
+                type="text"
+                id="pessoa"
+                name="pessoa"
+                value={formData.pessoa}
+                onChange={(e) => setFormData({ ...formData, pessoa: e.target.value })}
+                placeholder="Nome completo"
+                required
+                disabled={formLoading}
+              />
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={formLoading || livrosDisponiveis.length === 0}
+              >
+                {formLoading ? 'Registrando...' : 'Registrar Empréstimo'}
+              </button>
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => {
+                  setShowForm(false);
+                  setFormData({ livroId: '', pessoa: '' });
+                  setFormError('');
+                  setFormSuccess('');
+                }}
+                disabled={formLoading}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Lista de empréstimos ativos */}
+      {emprestimosAtivos.length === 0 ? (
         <div className="empty-state">
-          <p>Nenhum empréstimo registrado ainda.</p>
+          <p>Nenhum empréstimo ativo no momento.</p>
         </div>
       ) : (
-        <table className="emprestimos-table">
-          <thead>
-            <tr>
-              <th>Livro</th>
-              <th>Pessoa</th>
-              <th>Data Empréstimo</th>
-              <th>Data Devolução</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {emprestimos.map((emprestimo) => (
-              <tr key={emprestimo._id}>
-                <td>{emprestimo.livro?.titulo || 'N/A'}</td>
-                <td>{emprestimo.pessoa}</td>
-                <td>{new Date(emprestimo.dataPegou).toLocaleDateString('pt-BR')}</td>
-                <td>
-                  {emprestimo.dataDevolucao
-                    ? new Date(emprestimo.dataDevolucao).toLocaleDateString('pt-BR')
-                    : '-'}
-                </td>
-                <td>
-                  <span className={`status-badge status-${emprestimo.status}`}>
-                    {emprestimo.status === 'ativo' ? 'Ativo' : 'Devolvido'}
-                  </span>
-                </td>
-                <td>
-                  {emprestimo.status === 'ativo' && (
+        <div className="table-container">
+          <table className="emprestimos-table">
+            <thead>
+              <tr>
+                <th>Livro</th>
+                <th>Pessoa</th>
+                <th>Data Empréstimo</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {emprestimosAtivos.map((emprestimo) => (
+                <tr key={emprestimo._id}>
+                  <td>{emprestimo.livro?.titulo || 'N/A'}</td>
+                  <td>{emprestimo.pessoa}</td>
+                  <td>{new Date(emprestimo.dataPegou).toLocaleDateString('pt-BR')}</td>
+                  <td>
                     <button
                       className="btn-devolver"
                       onClick={() => handleDevolver(emprestimo._id)}
                     >
                       Devolver
                     </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
