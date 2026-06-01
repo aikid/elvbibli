@@ -1,9 +1,23 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const multer = require('multer');
 const router = express.Router();
 const emprestimoController = require('../controllers/emprestimoController');
 const authenticate = require('../middlewares/authMiddleware');
 const requireAdmin = require('../middlewares/adminMiddleware');
+
+// Upload em memória — aceita apenas imagens até 5MB
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Apenas imagens são aceitas'));
+    }
+  },
+});
 
 // Limite para criação de empréstimos
 const emprestimoLimiter = rateLimit({
@@ -22,6 +36,7 @@ const emailLimiter = rateLimit({
 router.get('/', emprestimoController.listAll);
 router.get('/atrasados', authenticate, requireAdmin, emprestimoController.getAtrasados);
 router.post('/notificar-atrasados', authenticate, requireAdmin, emailLimiter, emprestimoController.sendNotificacoes);
+router.post('/foto', emprestimoLimiter, upload.single('foto'), emprestimoController.createFromFoto);
 router.get('/:id', emprestimoController.getById);
 router.post('/', emprestimoLimiter, emprestimoController.create);
 router.put('/:id/devolver', emprestimoController.devolver);

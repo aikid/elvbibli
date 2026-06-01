@@ -6,7 +6,14 @@ const sanitizeHtml = require('sanitize-html');
  */
 const listAll = async (req, res) => {
   try {
-    const books = await Book.find({ status: 1 })
+    const filter = { status: 1 };
+
+    if (req.query.busca) {
+      const termo = req.query.busca.trim();
+      filter.titulo = { $regex: termo, $options: 'i' };
+    }
+
+    const books = await Book.find(filter)
       .populate({ path: 'emprestimos', match: { status: 'ativo' } })
       .sort({ createdAt: -1 });
     return res.status(200).json(books);

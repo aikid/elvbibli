@@ -1,6 +1,7 @@
 const Emprestimo = require('../models/Emprestimo');
 const Book = require('../models/Book');
 const { getEmprestimosAtrasados, enviarNotificacaoAtrasados } = require('../services/notificationService');
+const { extrairTexto, encontrarLivroNoTexto } = require('../services/ocrService');
 
 /**
  * GET /emprestimos - Lista todos os empréstimos
@@ -233,10 +234,87 @@ const sendNotificacoes = async (req, res) => {
   }
 };
 
+/**
+ * POST /emprestimos/foto - Cria empréstimo a partir da foto da capa do livro
+ * Body: multipart/form-data com campo "foto" (imagem) e "pessoa" (string)
+ */
+const createFromFoto = async (req, res) => {
+  try {
+    const { pessoa } = req.body;
+
+    if (!pessoa || !pessoa.trim()) {
+      return res.status(400).json({ erro: 'Campo obrigatório: pessoa' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ erro: 'Campo obrigatório: foto (imagem do livro)' });
+    }
+
+    // Extrai texto da imagem via OCR
+    let textoExtraido;
+    try {
+      textoExtraido = await extrairTexto(req.file.buffer);
+    } catch (ocrError) {
+      return res.status(422).json({ erro: 'Falha ao processar imagem com OCR', mensagem: ocrError.message });
+    }
+
+    if (!textoExtraido || !textoExtraido.trim()) {
+      return res.status(422).json({ erro: 'Não foi possível extrair texto da imagem fornecida' });
+    }
+
+    // Busca todos os livros ativos e tenta encontrar o título no texto extraído
+    const livros = await Book.find({ status: 1 });
+    const resultado = encontrarLivroNoTexto(textoExtraido, livros);
+
+    if (!resultado) {
+      return res.status(404).json({
+        erro: 'Nenhum livro do acervo foi identificado na imagem',
+        textoExtraido: textoExtraido.trim(),
+      });
+    }
+
+    const livro = resultado.livro;
+
+    // Verifica disponibilidade
+    const emprestimosAtivos = await Emprestimo.countDocuments({
+      livro: livro._id,
+      status: 'ativo',
+    });
+
+    if (emprestimosAtivos >= livro.quantidade) {
+      return res.status(400).json({
+        erro: 'Sem cópias disponíveis para emprestar',
+        livro: { _id: livro._id, titulo: livro.titulo },
+      });
+    }
+
+    const emprestimo = await Emprestimo.create({
+      livro: livro._id,
+      pessoa: pessoa.trim(),
+    });
+
+    await Book.findByIdAndUpdate(livro._id, { $push: { emprestimos: emprestimo._id } });
+
+    const emprestimoPopulado = await Emprestimo.findById(emprestimo._id).populate('livro');
+
+    return res.status(201).json(emprestimoPopulado);
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
+    if (error.name === 'ValidationError') {
+      const mensagens = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({ erro: 'Validação falhou', mensagens });
+    }
+    return res.status(500).json({ erro: 'Erro ao criar empréstimo por foto', mensagem: error.message });
+  }
+};
+
 module.exports = {
   listAll,
   getById,
   create,
+  createFromFoto,
   devolver,
   getByLivroId,
   remove,
