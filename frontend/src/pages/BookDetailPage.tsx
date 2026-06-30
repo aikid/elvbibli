@@ -155,7 +155,7 @@ export default function BookDetailPage() {
               <p className="book-detail-description">{book.descricao}</p>
               {book.statusDisponibilidade !== "emprestado" ? (
                 <button className="reserveButton" onClick={() => {
-                  const whatsappNumber = '+5511947341276';
+                  const whatsappNumber = '+5511936214261';
                   const message = `Olá! Gostaria de reservar o livro: ${book.titulo}`;
                   const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
                   window.open(whatsappUrl, '_blank');
